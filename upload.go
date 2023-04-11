@@ -7,9 +7,18 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/joho/godotenv"
 )
+
+func getAccessToken(clientId string, redirectUri string, scopes string) {
+	// Get the access token from the refresh token
+	fmt.Println()
+	fmt.Printf("https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=%v&response_type=code&redirect_uri=%v&scope=%v&state=qwerty", clientId, redirectUri, scopes)
+	fmt.Println()
+
+}
 
 func UploadPDF(fileName string) {
 
@@ -18,19 +27,17 @@ func UploadPDF(fileName string) {
 		fmt.Println("Error loading .env file:", err)
 		return
 	}
-	// appId := os.Getenv("APP_ID")
-	// // clientSecret := os.Getenv("SECRET_VALUE")
-	// redirectUri := os.Getenv("REDIRECT_URI")
-	// scopes := os.Getenv("SCOPES")
-	// fmt.Print()
-	// fmt.Printf("https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=%v&response_type=code&redirect_uri=%v&scope=%v&state=qwerty", appId, redirectUri, scopes)
-	// return
-	// Set the access token for authentication
-	accessToken := os.Getenv("TOKEN")
+
+	if accessToken == "" && refreshToken == "" {
+		getAccessToken(clientId, redirectUri, scopes)
+		accessToken = "INITIAL_TOKEN"
+		refreshToken = "INITIAL_REFRESH"
+		return
+	}
 
 	// Set the URL for uploading the file
-	uploadURL := "https://graph.microsoft.com/v1.0/me/drive/root:/FILE8.pdf:/content"
-
+	uploadURL := "https://graph.microsoft.com/v1.0/me/drive/root:/FILE" + strconv.Itoa(fileCount) + ".pdf:/content"
+	fileCount++
 	// Open the PDF file
 	file, err := os.Open(fileName)
 	if err != nil {
