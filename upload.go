@@ -12,13 +12,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func getAccessToken(clientId string, redirectUri string, scopes string) {
-	// Get the access token from the refresh token
-	fmt.Println()
-	fmt.Printf("https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=%v&response_type=code&redirect_uri=%v&scope=%v&state=qwerty", clientId, redirectUri, scopes)
-	fmt.Println()
 
-}
 
 func UploadPDF(fileName string) {
 
