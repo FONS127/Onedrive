@@ -21,6 +21,9 @@ var (
 	scopes       string
 	accessToken  string
 	refreshToken string
+	tenantId     string
+	authUrl      string
+	tokenUrl     string
 	fileCount    int
 )
 
@@ -71,6 +74,10 @@ func loadEnvVariables() {
 	accessToken = os.Getenv("ACCESS_TOKEN")
 	refreshToken = os.Getenv("REFRESH_TOKEN")
 
+	authUrl = os.Getenv("AUTH_URL")
+	tokenUrl = os.Getenv("TOKEN_URL")
+	tenantId = os.Getenv("TENANT_ID")
+
 	fileCount = 20
 }
 
@@ -79,6 +86,27 @@ type TokenResponse struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
+func updateEnvFileTokens(newAccessToken string, newRefreshToken string) {
+
+	envMap := make(map[string]string)
+	envMap["CLIENT_ID"] = clientId
+	envMap["CLIENT_SECRET"] = clientSecret
+	envMap["REDIRECT_URI"] = redirectUri
+	envMap["SCOPES"] = scopes
+	envMap["TENANT_ID"] = tenantId
+	envMap["ACCESS_TOKEN"] = newAccessToken
+	envMap["REFRESH_TOKEN"] = newRefreshToken
+	envMap["AUTH_URL"] = authUrl
+	envMap["TOKEN_URL"] = tokenUrl
+
+	err := godotenv.Write(envMap, ".env")
+	if err != nil {
+		log.Fatal("Error writing .env file")
+	}
+	os.Setenv("ACCESS_TOKEN", newAccessToken)
+	os.Setenv("REFRESH_TOKEN", newRefreshToken)
+
+}
 func updateToken() {
 	url := "https://login.microsoftonline.com/common/oauth2/v2.0/token"
 	data := []byte(fmt.Sprintf("grant_type=refresh_token&client_id=%s&client_secret=%s&refresh_token=%s&scope=%s", clientId, clientSecret, refreshToken, scopes))
@@ -117,10 +145,15 @@ func updateToken() {
 		panic(errRefreshToken)
 	}
 
+	updateEnvFileTokens(token.AccessToken, token.RefreshToken)
+
 	accessToken = token.AccessToken
 	refreshToken = token.RefreshToken
-	fmt.Println("Access Token:", token.AccessToken)
-	fmt.Println("Refresh Token:", token.RefreshToken)
+	if accessToken != "" && refreshToken != "" {
+		fmt.Println("Token updated")
+		return
+	}
+	fmt.Println("Token not updated")
 }
 
 func main() {
@@ -131,15 +164,16 @@ func main() {
 		count := 0
 		for {
 			count++
-			time.Sleep(20 * time.Second)
-			//Post request to get the new access,refresh tokens
-
 			updateToken()
-
-			fmt.Println("New Acces Token: " + accessToken)
-			fmt.Println("New Refresh Token: " + refreshToken)
+			time.Sleep(5 * time.Minute)
 		}
 	}()
+	if accessToken == "" && refreshToken == "" {
+		getAccessToken(clientId, redirectUri, scopes)
+		accessToken = "INITIAL_TOKEN"
+		refreshToken = "INITIAL_REFRESH"
+		return
+	}
 	http.HandleFunc("/pdf-upload", handlePDFUpload)
 
 	fmt.Println("Server listening on port 8080")

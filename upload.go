@@ -28,12 +28,7 @@ func UploadPDF(fileName string) {
 		return
 	}
 
-	if accessToken == "" && refreshToken == "" {
-		getAccessToken(clientId, redirectUri, scopes)
-		accessToken = "INITIAL_TOKEN"
-		refreshToken = "INITIAL_REFRESH"
-		return
-	}
+
 
 	// Set the URL for uploading the file
 	uploadURL := "https://graph.microsoft.com/v1.0/me/drive/root:/FILE" + strconv.Itoa(fileCount) + ".pdf:/content"
